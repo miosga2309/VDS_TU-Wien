@@ -1,0 +1,338 @@
+---
+title: "VDS Laboratory 2"
+author: "Jonas Miosga"
+date: "12/9/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = TRUE)
+set.seed(123)
+library(ggplot2)
+library(hrbrthemes)
+library(GGally)
+library(viridis)
+library(dplyr)
+library(tidyverse)
+library(ggridges)
+library(gridExtra)
+library(grid)
+library(png)
+library(grDevices)
+library(knitr)
+library(kableExtra)
+library(glmnet)
+bike <- read.csv("~/Documents/TU/VDS/bikeSharing.shuf.train.csv")
+bike$id <- NULL
+bike$dteday <- NULL
+as.data.frame(bike)
+```
+
+# Task 2: Data Analysis/Finding Insights
+## The Data
+The dataset used in the laboratory 2 assignment is about bikesharing and is from [Kaggle](https://www.kaggle.com/c/184702-tu-ml-ws-19-bikesharing). Only the training dataset is used because we are only interested in the observations that have the dependent variable `cnt`. The data is from 2011 and 2012. The launch of the bikesharing company was in 2010. Several features about the weather conditions and the time in year are provided. Since we have variables indicating the year, season, month, weekday and hour, we can delete the timestamp variable. Also, the variable ID is deleted because in R, the program I am doing this report with, is indexing the rows anyway. \
+In addition to the circumstancial variables, the variable `cnt` indicates the count of new bike shares. It is grouped by start time of the share per hour, i.e. the count of new bike shares by hour. The long duration shares are not taken in the count. `cnt` is used as the dependent variable and the mean is 188.4 (red line in the plot). Summed up, this makes 13 variables. \
+In total, we have 8690 observations, i.e. a count of new bike shares in this particular hour plus the corresponding weather information. The data is complete, we have no missing values.
+
+```{r grpahs, echo=F, fig.width=14, fig.height=12}
+# cnt
+p1 <- bike %>%
+  filter( cnt<1000 ) %>%
+  ggplot( aes(x=cnt)) +
+    geom_density(fill="#69b3a2", color="#e9ecef", alpha=0.8) +
+    geom_vline(aes(xintercept = mean(cnt)), color = "darkred")
+# season
+p2 <- bike %>%
+  filter( season<5 ) %>%
+  ggplot( aes(x=season)) +
+    geom_histogram( binwidth=1, fill="#69b3a2", color="#e9ecef", alpha=0.8)
+# yr
+p3 <- bike %>%
+  filter( yr<2 ) %>%
+  ggplot( aes(x=yr)) +
+    geom_histogram( binwidth=1, fill="#69b3a2", color="#e9ecef", alpha=0.8)
+    #+ theme(axis.text.x = element_blank())
+# mnth
+p4 <- bike %>%
+  filter( mnth<13 ) %>%
+  ggplot( aes(x=mnth)) +
+    geom_histogram( binwidth=1, fill="#69b3a2", color="#e9ecef", alpha=0.8)
+# hr
+p5 <- bike %>%
+  filter( hr<25 ) %>%
+  ggplot( aes(x=hr)) +
+    geom_histogram( binwidth=1, fill="#69b3a2", color="#e9ecef", alpha=0.8)
+# holiday
+p6 <- bike %>%
+  filter( holiday<2 ) %>%
+  ggplot( aes(x=holiday)) +
+    geom_histogram( binwidth=1, fill="#69b3a2", color="#e9ecef", alpha=0.8)
+# weekday
+p7 <- bike %>%
+  filter( weekday<8 ) %>%
+  ggplot( aes(x=weekday)) +
+    geom_histogram( binwidth=1, fill="#69b3a2", color="#e9ecef", alpha=0.8)
+# workingday
+p8 <- bike %>%
+  filter( workingday<2 ) %>%
+  ggplot( aes(x=workingday)) +
+    geom_histogram( binwidth=1, fill="#69b3a2", color="#e9ecef", alpha=0.8)
+# weathersit
+p9 <- bike %>%
+  filter( weathersit<5 ) %>%
+  ggplot( aes(x=weathersit)) +
+    geom_histogram( binwidth=1, fill="#69b3a2", color="#e9ecef", alpha=0.8)
+# temp
+p10 <- bike %>%
+  filter( temp<1 ) %>%
+  ggplot( aes(x=temp)) +
+    geom_density(fill="#69b3a2", color="#e9ecef", alpha=0.8)
+# atemp
+p11 <- bike %>%
+  filter( atemp<1 ) %>%
+  ggplot( aes(x=atemp)) +
+    geom_density(fill="#69b3a2", color="#e9ecef", alpha=0.8)
+# windspeed
+p12 <- bike %>%
+  filter( windspeed<1 ) %>%
+  ggplot( aes(x=windspeed)) +
+    geom_density(fill="#69b3a2", color="#e9ecef", alpha=0.8)
+# hum
+p13 <- bike %>%
+  filter( hum<1 ) %>%
+  ggplot( aes(x=hum)) +
+    geom_density(fill="#69b3a2", color="#e9ecef", alpha=0.8)
+
+grid.arrange(p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13, ncol = 4)
+```
+
+## Insight No.1
+#### Fact
+As the bikesharing data was collected soon after the company launched the program, the number of new bike shares per hour is increasing, probably due to an increased popularity of the brand. In the plot below, one can clearly see the difference between 2011 and 2012. Whereas in 2011 most of the counts per hour were close to 0, this tendency decreased in 2012.
+
+#### Discovery
+I discovered the difference by plotting the density of the new bikeshares variable `cnt` and grouping the data based on the other variables.
+
+#### Visualization
+```{r grpahs123, echo=F}
+bike$yr <- factor(bike$yr)
+levels(bike$yr) <- c("2011", "2012")
+p15 <- ggplot(data=bike, aes(x=cnt, group=yr, fill=yr)) +
+    geom_density(adjust=1.5, alpha=.4) +
+  ggtitle("Density of cnt per year")
+p15
+```
+
+#### Testing statistical significance
+For the analysis of how the features influence the frequency of new bikeshares per hour, a lasso regression will be used. The lasso regression puts only weak assumptions on the data which makes it a versatile and flexible technique. In addition, lasso constraints the coefficients individually which avoids overfitting and leads to a feature selection to simplify the model. For the model selection, we can either use the minimum error criterion which simply reduces the MSE to a minimum or the most regularized model which is a simpler model and still within 1 standard deviation from the error minimum. In practise, the latter criterion is often preferred.
+
+```{r analysis, echo=F}
+levels(bike$yr) <- c("0", "1")
+bike$yr <- as.numeric(bike$yr)
+res.cv <- cv.glmnet(as.matrix(bike[,-1]),bike[,1], lambda = seq(0, 60, .5))
+pred.lasso <- predict(res.cv,newx=as.matrix(bike[,-1]),s="lambda.1se")
+
+r2.lasso <- cor(bike[,"cnt"],pred.lasso)^2 # R^2
+mse.lasso <- mean((bike[,"cnt"]-pred.lasso)^2) # MSE
+
+plt.data <- data.frame(bike[,"cnt"], pred.lasso)
+names(plt.data) <- c("cnt", "predcnt")
+p14 <- ggplot(plt.data, aes(x=cnt, y=predcnt)) + 
+    geom_point() +
+    geom_abline(intercept = 0, slope = 1, col = "darkred") +
+    labs(x = "Actual count", y = "Predicted count") +
+  ggtitle("Regression plot: predicted vs. actual")
+p14
+```
+
+In the plot above one can observe the prediction error. The black dots represent the actual data plotted against the predicted data of the bikeshare count per hour. The red line is the regression line which resembles the perfect fit between prediction and actual results. Since there is spread around it, our predictions is uncertain which is reflected by the prediction error.
+
+```{r coefstable, echo=F}
+coef.3features <- coef(res.cv,s=44.5) # most reg. model
+coef.reg <- coef(res.cv,s="lambda.1se") # min. error
+coef.min <- coef(res.cv,s="lambda.min") # min. error
+df.lasso <- round(data.frame(as.matrix(coef.3features), 
+                             as.matrix(coef.reg),
+                             as.matrix(coef.min)), 
+                  digits = 2)
+df.lasso[df.lasso == 0] <- "excluded"
+names(df.lasso) <- c("3 feature model",
+                     "Most regularized", 
+                     "Minimum error")
+df.lasso %>%
+  kable() %>%
+  kable_styling(bootstrap_options = "striped", full_width = F)
+```
+
+The table above provides us with the information about the lasso regression model, once with the option to choose the parameter to create the most regularized model, i.e. the model with the lowest number of coefficients while keeping the prediction error low. The second model reduces the prediction error to a minimum and also includes variables which have a low but existing effect on the dependent variable `cnt`. \
+
+## Insight No. 2
+#### Fact
+The number of new bikeshares is mainly influenced by 1. the feeled temperature `atemp`, 2. humidity `hum` and 3. the particular hour `hr`. Season, year and temperature are also in the model, however, their influence is weaker.
+
+#### Discovery
+I discovered the main influential factors with the lasso regression presented under "Discovery" in "Insight No. 1". 
+
+#### Visualization
+```{r visual2, echo=F}
+seas <- 4*9.11
+year <- 58.28
+hour <- 6.45*24
+temp <- 98.15
+atemp <- 169.04
+hum <- 153.1
+piedata <- data.frame(seas, year, hour, temp, atemp, hum)
+x <- names(piedata)
+y <- c(seas, year, hour, temp, atemp, hum)
+ggbar <- data.frame(x,y)
+ggbar <- ggbar[order(ggbar$y, decreasing = T),]
+p16 <- ggplot(data=ggbar, aes(x=reorder(x, -y), y=y)) +
+  geom_bar(stat="identity") +
+  xlab("Variables") +
+  ylab("Weight")
+p16
+```
+
+#### Testing statistical significance
+This plots includes only features which were tested to have a significant influence on the count of new bikeshares per hour.
+
+## Insight No.3
+#### Fact
+From late in the evening around 11pm to 5am, the number of bikeshares is rather low on most of the days, i.e. the variance is rather small. This indicates at night constantly only a few bikeshares are made. In contrast, more new bikeshares are made during the day with a high variance in the exact number per day, especially during 8am and 5pm. During the day, the influence of the other factors influencing the number of new bikeshares explained in "Insight No. 2" seems to be higher (temperature, humidity etc.).
+
+#### Discovery
+This discovery is also based on the regression where `hour` was exposed as an important factor and I wanted to have a closer look at the association between daytime and the number of new bikeshares. The following ridgeline plot shows that in more detail.
+
+#### Visualization
+```{r ridgeplot, echo=F}
+bike$hr <- factor(bike$hr)
+p17 <- ggplot(bike, aes(x = cnt, y = hr, fill = hr)) +
+   geom_density_ridges() +
+   theme(legend.position = "none") +
+  ggtitle("Density of cnt per hour")
+p17
+```
+
+## Summary
+All of variables I have shown in a certain context have proven to be statistically significant when looking at the lasso regression analysis. However, we need to keep in mind that statistical significance does not neccissarily mean practical relevance. For instance, the first insight where the year 2011 and 2012 are compared clearly shows different patterns for each year, though `year` has only a minor influence on the count of new bikeshares. If penalizing the model enough through the lasso constraint, the variable year is removed even before temperature. This is indeed proof for the low relevance since temperature `temp` and feeled temperature `atemp` are highly correlated (r = 0.99) and those two variables stay in the model together longer than `year`.
+
+
+# Task 3: Evaluation Study
+## The Charts
+#### cnt-Density per Year
+The first chart is about the year difference in the distribution of the count of new bikeshares per hour, thus a grouped density plot.
+
+#### Factor Weights on cnt
+The second plot is a simple bar chart in which each of the features (in total: 6) of the most regularized statistical model is represented by a bar. The part's size implies the importance or the weight of the variable in the model. The weight is calculated by the coefficient times the values, the independent variable can take (e.g., hour: 3.11 * 23 since hour is max. 23).
+
+#### cnt-Density per Hour
+The feature hour is an essential explanatory variable in our model and in this plot, we can see why that is. The day time strongly influences the number of new bikeshares with peaks at around 8am and 5-6pm which one can clearly observe in the ridgeline plot.
+
+## Charting Library and Application Selection
+I try to select libraries and applications which I might encounter in the future during my studies or on the job. For example, in an internship I will start soon, I have to work with Power BI.
+Libraries:\
+1. **ggplot (R)**.\
+2. **R basic charting**.\
+3. **Python**.\
+Applications: \
+4. **Power BI**.\
+5. **Google Sheets**.\
+6. **Excel**.
+
+## Recreations
+#### Tool 1: ggplot (used in the analysis)
+```{r ggplotrec, echo=F}
+pushViewport(viewport(layout = grid.layout(2, 2)))
+vplayout <- function(x, y) viewport(layout.pos.row = x, layout.pos.col = y)
+print(p15, vp = vplayout(1, 1))
+print(p17, vp = vplayout(1:2, 2))
+print(p16, vp = vplayout(2, 1))
+```
+
+#### Tool 2: R basic
+```{r basic, echo=F, fig.width=7}
+par(mfrow=c(1,2))
+# year
+d1 <- density(bike$cnt[bike$yr == 1])
+d2 <- density(bike$cnt[bike$yr == 2])
+plot(d1, col = "red", main = "Density of cnt per year", xlab = "cnt") 
+lines(d2, col = "blue")
+legend(300, .004, legend=c("2011", "2012"),
+       col=c("red", "blue"), lty=1:2, cex=0.8)
+# bar
+barplot(as.vector(ggbar[,2]), names.arg=as.vector(ggbar[,1]))
+# density ridges
+#d3 <- density(bike$cnt[bike$hr == 17])
+#plot(d3)
+```
+
+#### Tool 3: Python
+
+#### Tool 4: Power BI
+
+#### Tool 5: Google Sheets
+
+#### Tool 6: Excel
+
+## Evaluation
+The grade scale goes from 1 (bad/not supported) to 10 (great/highly supported). Every grading process is shortly described.
+
+#### Tool 1: ggplot (used in the analysis)
+| Tool          | Data Handling | User Guidance | Feature Richness | Innovation | Flexibility | Interaction |
+|---------------|---------------|---------------|------------------|------------|-------------|-------------|
+| ggplot        |      9        |       7       |   9              | 8          |           9 |        1    |
+`ggplot` handles data very well since ggplot is used in the R environment which is basically build for data manipulation and is able to load very different formats. The documentation is good but there is not one comprehensible manual which is able to easily explain all its possibilities. However, using search engines, one can quickly find help. The lack of one manual might be caused in its feature richness and its expandability. The components in `ggplot` are like blocks which are literally added on top of each other (e.g., ggplot(data, aesthetics + ggtitle("...") + geom_bar(...))). This way, a [vast range of innovative plots](https://www.r-graph-gallery.com/index.html) can be created. The interaction is non-existent in `ggplot` itself. Other packages like `plotly` rely on ggplot as the visualization tool and enable interaction with the graphic.
+
+#### Tool 2: R basic
+| Tool          | Data Handling | User Guidance | Feature Richness | Innovation | Flexibility | Interaction |
+|---------------|---------------|---------------|------------------|------------|-------------|-------------|
+| R             |      9        |         8     |       5          |  4         |       7     |       1     |
+The basic R plotting tools work similarly to `ggplot` but are limited to the basics in plotting. Also, the design is very basic. More advanced graphs like the ridgeline plots are not possible. However, we could plot each plot per hour individually which I did once as an example. The user guidance is very good which is also caused in the simplicity of features the basic R has. Like `ggplot` the basic R visualization methods are also relatively flexible but again, no interaction is possible. Note that not all variable names are displayed which is unfortunate.
+
+#### Tool 3: Python
+| Tool          | Data Handling | User Guidance | Feature Richness | Innovation | Flexibility | Interaction |
+|---------------|---------------|---------------|------------------|------------|-------------|-------------|
+| Python        |               |               |                  |            |             |             |
+
+#### Tool 4: Power BI
+| Tool          | Data Handling | User Guidance | Feature Richness | Innovation | Flexibility | Interaction |
+|---------------|---------------|---------------|------------------|------------|-------------|-------------|
+| Power BI      |               |               |                  |            |             |             |
+
+#### Tool 5: Google Sheets
+| Tool          | Data Handling | User Guidance | Feature Richness | Innovation | Flexibility | Interaction |
+|---------------|---------------|---------------|------------------|------------|-------------|-------------|
+| Google Sheets |               |               |                  |            |             |             |
+
+#### Tool 6: Excel
+| Tool          | Data Handling | User Guidance | Feature Richness | Innovation | Flexibility | Interaction |
+|---------------|---------------|---------------|------------------|------------|-------------|-------------|
+| Excel         |               |               |                  |            |             |             |
+
+#### Summary Table
+| Tool          | Data Handling | User Guidance | Feature Richness | Innovation | Flexibility | Interaction |
+|---------------|---------------|---------------|------------------|------------|-------------|-------------|
+| ggplot        |      9        |       7       |   9              | 8          |           9 |        1    |
+| R             |               |               |                  |            |             |             |
+| Python        |               |               |                  |            |             |             |
+| Power BI      |               |               |                  |            |             |             |
+| Google Sheets |               |               |                  |            |             |             |
+| Excel         |               |               |                  |            |             |             |
+
+## Task descript
+1. Select 3 charting libraries and 3 applications you would like to test (see below).
+2. Recreate all three charts you created in task 2 in the 6 selected charting libraries and applications, and also explore the interaction possibilities.
+3. Evaluate the selected charting libraries and applications based on the given evaluation scheme (see below).
+4. Draw conclusions from the study and rank the tested charting libraries and applications.
+5. Create an overview visualization to report the results of the study (see below).
+
+Evaluate the charting libraries and applications according to criteria given below.
+Always use a grade from 1 (bad / not supported) to 10 (great / highly supported).
+- Data Handling (How easy is it to load data and to do simple data handling tasks like filtering?)
+- User Guidance (How easy is it to find the necessary functions and get help on certain features? Is there a documentation?)
+- Feature Richness (How many visualization features are provided?)
+- Innovation (Are innovative visualization features provided, or only basic charts?)
+- Flexibility (Is it possible to adjust the visualizations to your needs?)
+- Interaction (Is it possible to create interactive visualizations?)
+

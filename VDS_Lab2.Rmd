@@ -1,0 +1,188 @@
+---
+title: "VDS Laboratory 2"
+author: "Jonas Miosga"
+date: "11/20/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+set.seed(123)
+library(ggplot2)
+library(hrbrthemes)
+library(GGally)
+library(viridis)
+library(dplyr)
+library(tidyverse)
+library(ggridges)
+library(gridExtra)
+library(grid)
+library(png)
+library(grDevices)
+library(knitr)
+library(kableExtra)
+library(glmnet)
+bike <- read.csv("~/Documents/TU/VDS/bikeSharing.shuf.train.csv")
+bike$id <- NULL
+bike$dteday <- NULL
+as.data.frame(bike)
+#indx <- sapply(bike, is.factor)
+#bike[indx] <- lapply(bike[indx], function(x) as.numeric(as.character(x)))
+```
+# Task 1/2: Data Analysis
+## The Data
+The dataset used in the laboratory 2 assignment is about bikesharing and is from [Kaggle](https://www.kaggle.com/c/184702-tu-ml-ws-19-bikesharing). Only the training dataset is used because we are only interested in the observations that have the dependent variable `cnt`. The data is from 2011 and 2012. The launch of the bikesharing company was in 2010. Several features about the weather conditions and the time in year are provided. Since we have variables indicating the year, season, month, weekday and hour, we can delete the timestamp variable. Also, the variable ID is deleted because in R, the program I am doing this report with, is indexing the rows anyway. \
+In addition to the circumstancial variables, the variable `cnt` indicates the count of new bike shares. It is grouped by start time of the share per hour, i.e. the count of new bike shares by hour. The long duration shares are not taken in the count. `cnt` is used as the dependent variable and the mean is 188.4 (red line in the plot). Summed up, this makes 13 variables. \
+In total, we have 8690 observations, i.e. a count of new bike shares in this particular hour plus the corresponding weather information. The data is complete, we have no missing values.
+
+```{r grpahs, echo=F, fig.width=14, fig.height=12}
+# cnt
+p1 <- bike %>%
+  filter( cnt<1000 ) %>%
+  ggplot( aes(x=cnt)) +
+    geom_density(fill="#69b3a2", color="#e9ecef", alpha=0.8) +
+    geom_vline(aes(xintercept = mean(cnt)), color = "darkred")
+# season
+p2 <- bike %>%
+  filter( season<5 ) %>%
+  ggplot( aes(x=season)) +
+    geom_histogram( binwidth=1, fill="#69b3a2", color="#e9ecef", alpha=0.8)
+# yr
+p3 <- bike %>%
+  filter( yr<2 ) %>%
+  ggplot( aes(x=yr)) +
+    geom_histogram( binwidth=1, fill="#69b3a2", color="#e9ecef", alpha=0.8)
+    #+ theme(axis.text.x = element_blank())
+# mnth
+p4 <- bike %>%
+  filter( mnth<13 ) %>%
+  ggplot( aes(x=mnth)) +
+    geom_histogram( binwidth=1, fill="#69b3a2", color="#e9ecef", alpha=0.8)
+# hr
+p5 <- bike %>%
+  filter( hr<25 ) %>%
+  ggplot( aes(x=hr)) +
+    geom_histogram( binwidth=1, fill="#69b3a2", color="#e9ecef", alpha=0.8)
+# holiday
+p6 <- bike %>%
+  filter( holiday<2 ) %>%
+  ggplot( aes(x=holiday)) +
+    geom_histogram( binwidth=1, fill="#69b3a2", color="#e9ecef", alpha=0.8)
+# weekday
+p7 <- bike %>%
+  filter( weekday<8 ) %>%
+  ggplot( aes(x=weekday)) +
+    geom_histogram( binwidth=1, fill="#69b3a2", color="#e9ecef", alpha=0.8)
+# workingday
+p8 <- bike %>%
+  filter( workingday<2 ) %>%
+  ggplot( aes(x=workingday)) +
+    geom_histogram( binwidth=1, fill="#69b3a2", color="#e9ecef", alpha=0.8)
+# weathersit
+p9 <- bike %>%
+  filter( weathersit<5 ) %>%
+  ggplot( aes(x=weathersit)) +
+    geom_histogram( binwidth=1, fill="#69b3a2", color="#e9ecef", alpha=0.8)
+# temp
+p10 <- bike %>%
+  filter( temp<1 ) %>%
+  ggplot( aes(x=temp)) +
+    geom_density(fill="#69b3a2", color="#e9ecef", alpha=0.8)
+# atemp
+p11 <- bike %>%
+  filter( atemp<1 ) %>%
+  ggplot( aes(x=atemp)) +
+    geom_density(fill="#69b3a2", color="#e9ecef", alpha=0.8)
+# windspeed
+p12 <- bike %>%
+  filter( windspeed<1 ) %>%
+  ggplot( aes(x=windspeed)) +
+    geom_density(fill="#69b3a2", color="#e9ecef", alpha=0.8)
+# hum
+p13 <- bike %>%
+  filter( hum<1 ) %>%
+  ggplot( aes(x=hum)) +
+    geom_density(fill="#69b3a2", color="#e9ecef", alpha=0.8)
+
+grid.arrange(p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13, ncol = 4)
+```
+
+All variables that we will use for the analysis are plotted above. The counter variable shrinks exponentially. The time variables `year`, `season`, `month`, `weekday` and `hour` have approximately the equal number of counter observations. This makes sense having in mind that observations are made continuously, independent of the count of new bikeshares at this point of time. The same logic applies to `holiday` and `workingday` with the difference that holiday and working days are not equally often during the year as no holidays and no working days. The weather situation is separated into four categories 1 to 4 with larger numbers being a more unbearable weather situation to drive a bike. Temperature is divided into the real temperature `temp`and the feeled temperature `atemp`. Both are more or less normally distributed `temp` having one gap in the middle and `atemp` having two gaps. The wind speed is skewed to the right with lower wind speeds occuring more often. No or almost no wind is very freuquent as well which leads to a gap between lower wind speeds and almost no wind. Lastly, humidity is approximately equally distributed.
+
+## Analysis
+For the analysis of how the features influence the frequency of new bikeshares per hour, a lasso regression will be used. The lasso regression puts only weak assumptions on the data which makes it a versatile and flexible technique. In addition, lasso constraints the coefficients individually which avoids overfitting and leads to a feature selection to simplify the model.
+
+```{r analysis, echo=F}
+res.cv <- cv.glmnet(as.matrix(bike[,-1]),bike[,1], lambda = seq(0, 60, .5))
+pred.lasso <- predict(res.cv,newx=as.matrix(bike[,-1]),s="lambda.1se")
+
+r2.lasso <- cor(bike[,"cnt"],pred.lasso)^2 # R^2
+mse.lasso <- mean((bike[,"cnt"]-pred.lasso)^2) # MSE
+
+plt.data <- data.frame(bike[,"cnt"], pred.lasso)
+names(plt.data) <- c("cnt", "predcnt")
+p14 <- ggplot(plt.data, aes(x=cnt, y=predcnt)) + 
+    geom_point() +
+    geom_abline(intercept = 0, slope = 1, col = "darkred") +
+    labs(x = "Actual count", y = "Predicted count")
+p14
+```
+
+In the plot above one can observe the prediction error. The black dots represent the actual data plotted against the predicted data of the bikeshare count per hour. The red line is the regression line which resembles the perfect fit between prediction and actual results. Since there is spread around it, our predictions is uncertain which is reflected by the prediction error. The proportion of variance we can explain is 38.1% (R-squared).
+
+## The Coefficients
+
+```{r coefstable, echo=F}
+coef.3features <- coef(res.cv,s=44.5) # most reg. model
+coef.reg <- coef(res.cv,s="lambda.1se") # min. error
+coef.min <- coef(res.cv,s="lambda.min") # min. error
+df.lasso <- round(data.frame(as.matrix(coef.3features), 
+                             as.matrix(coef.reg),
+                             as.matrix(coef.min)), 
+                  digits = 2)
+df.lasso[df.lasso == 0] <- "excluded"
+names(df.lasso) <- c("3 feature model",
+                     "Most regularized", 
+                     "Minimum error")
+df.lasso %>%
+  kable() %>%
+  kable_styling(bootstrap_options = "striped", full_width = F)
+```
+
+The table above provides us with the information about the lasso regression model, once with the option to choose the parameter to create the most regularized model, i.e. the model with the lowest number of coefficients while keeping the prediction error low. The second model reduces the prediction error to a minimum and also includes variables which have a low but existing effect on the dependent variable `cnt`. \
+It appears that particularly the season, year, daytime, temperature, feeled temperature and humidity influence the number of new bikeshares per time period. Note that for a correct interpretation the value range of a variable can have are required. For instance, hour has a small coefficient but is in the model because its values can be as large as 24 which gives a maximum contribution to `cnt` of 24 times the coefficient. In contrast, humidity or temperature have a maximum possible value of 1. \
+Interestingly, the actual temperature AND the feeled temperature are in the model although one would expect that those two are correlated and only one makes it into the model. Also, the weather situation seems to only have a minor influence on the dependent variable. This might be explained by shared variance with one of the temperature variables. The anomalies of two types of temperature in the model and the exclusion of the weather situation are object to further examination.
+
+## Studying Anomalies
+#### Both `temp` and `atemp` in the model?
+`temp`and `atemp` are highly correlated (r = 0.99). Consequently, one would wonder why both the features are included in the model. \
+When choosing the lambda for the lasso model which aims to minimize the prediction error, lambda is 0. A lasso with lambda = 0 is equal to a ordinary least squares regression. When aiming for simplicity, lambda is 9.5 which appears to still penalize the model not enough to kick out one of the redundant temperature variables. We need to increase the coefficient penalty a lot to make this happen. It is intriguing to see that before one of the temperatures is kicked out, `season` and `year` are removed. This means that those two variables, although still in the model, are at the lower end of importance in explaining `cnt`. 
+
+#### No Weather situation?
+When running a linear regression on the weather situation trying to explain its variance with the other variables, eight of those seem to have influence on it. Naturally, many of the variables are associated with the weather in a more detailed way and the situation feature is a broad summary of all features. This might explain why weather situation is not included in the model.
+
+#### Establishing Bikesharing
+As the bikesharing data was collected soon after the company launched the program, the number of new bike shares per hour is increasing, probably due to an increased popularity of the brand. In the plot below, one can clearly see the difference between 2011 and 2012. Whereas in 2011 most of the counts per hour were close to 0, this tendency decreased in 2012.
+```{r grpahs123, echo=F}
+bike$yr <- factor(bike$yr)
+levels(bike$yr) <- c("2011", "2012")
+p15 <- ggplot(data=bike, aes(x=cnt, group=yr, fill=yr)) +
+    geom_density(adjust=1.5, alpha=.4)
+p15
+```
+
+
+## Conclusion of Analysis and Key Insights
+As the season and the year are removed even before the actual temperature `atemp` which is redundant regarding the temperature, we can conclude that the most important variables are 1. the temperature `temp`, 2. humidity `hum` and 3. the particular hour `hr`.
+Although year is not a significant explanatory variable in this setting, we can clearly observe an overall difference between 2011 and 2012.
+
+# Task 3: Evaluation Study
+## The Charts
+#### Variable Plots
+The first chart is actually a assembly of 13 small charts with an overview of the relevant variables in the dataset. For the five continuous variables, density plots were used where the first one, the dependent variable `cnt`, has a red line marking the mean. The other eight charts are histograms where the bin width is essential for the correct display.
+
+#### Regression Equation Plot
+The second chart shows the resulting regression equation which is used for prediction of `cnt` as the red line and around it, the actual `cnt`-values on the x-axis and the predicted values of the training data on the y-axis. This plot has the purpose of providing a graphical display of our prediction's accuracy.
+
+#### Year Difference Plot
+The last chart displays the number of new bikeshares per hour grouped by the years 2011 and 2012. This plot enables one to observe the development of the bikesharing program within the two years.
