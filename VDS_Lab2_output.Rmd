@@ -252,7 +252,9 @@ print(p16, vp = vplayout(2, 1))
 
 #### Tool 2: R basic
 ```{r basic, echo=F, fig.width=7}
-par(mfrow=c(1,2))
+#par(mfrow=c(2,2))
+layout(matrix(c(1,2,3,3), 2, 2, byrow = TRUE),
+   widths=c(1,1), heights=c(1,1))
 # year
 d1 <- density(bike$cnt[bike$yr == 1])
 d2 <- density(bike$cnt[bike$yr == 2])
@@ -260,14 +262,16 @@ plot(d1, col = "red", main = "Density of cnt per year", xlab = "cnt")
 lines(d2, col = "blue")
 legend(300, .004, legend=c("2011", "2012"),
        col=c("red", "blue"), lty=1:2, cex=0.8)
+# density ridges
+d3 <- density(bike$cnt[bike$hr == 17])
+plot(d3, main="Density of cnt at hour 17", xlab="cnt[hr==17]")
 # bar
 barplot(as.vector(ggbar[,2]), names.arg=as.vector(ggbar[,1]))
-# density ridges
-#d3 <- density(bike$cnt[bike$hr == 17])
-#plot(d3)
+
 ```
 
 #### Tool 3: Python
+![](/Users/jonasmiosga/Desktop/graphic TU/python_plots.png)
 
 #### Tool 4: Power BI
 
@@ -281,19 +285,20 @@ The grade scale goes from 1 (bad/not supported) to 10 (great/highly supported). 
 #### Tool 1: ggplot (used in the analysis)
 | Tool          | Data Handling | User Guidance | Feature Richness | Innovation | Flexibility | Interaction |
 |---------------|---------------|---------------|------------------|------------|-------------|-------------|
-| ggplot        |      9        |       7       |   9              | 8          |           9 |        1    |
+| ggplot        |      9        |       7       |   8              | 8          |           9 |        1    |
 `ggplot` handles data very well since ggplot is used in the R environment which is basically build for data manipulation and is able to load very different formats. The documentation is good but there is not one comprehensible manual which is able to easily explain all its possibilities. However, using search engines, one can quickly find help. The lack of one manual might be caused in its feature richness and its expandability. The components in `ggplot` are like blocks which are literally added on top of each other (e.g., ggplot(data, aesthetics + ggtitle("...") + geom_bar(...))). This way, a [vast range of innovative plots](https://www.r-graph-gallery.com/index.html) can be created. The interaction is non-existent in `ggplot` itself. Other packages like `plotly` rely on ggplot as the visualization tool and enable interaction with the graphic.
 
 #### Tool 2: R basic
 | Tool          | Data Handling | User Guidance | Feature Richness | Innovation | Flexibility | Interaction |
 |---------------|---------------|---------------|------------------|------------|-------------|-------------|
-| R             |      9        |         8     |       5          |  4         |       7     |       1     |
+| R             |      9        |         8     |       5          |  3         |       7     |       1     |
 The basic R plotting tools work similarly to `ggplot` but are limited to the basics in plotting. Also, the design is very basic. More advanced graphs like the ridgeline plots are not possible. However, we could plot each plot per hour individually which I did once as an example. The user guidance is very good which is also caused in the simplicity of features the basic R has. Like `ggplot` the basic R visualization methods are also relatively flexible but again, no interaction is possible. Note that not all variable names are displayed which is unfortunate.
 
 #### Tool 3: Python
 | Tool          | Data Handling | User Guidance | Feature Richness | Innovation | Flexibility | Interaction |
 |---------------|---------------|---------------|------------------|------------|-------------|-------------|
-| Python        |               |               |                  |            |             |             |
+| Python        |      6        |      8        |       9          |     8      |       5     |     1       |
+When talking about using Python, this will imply that I used modules because Python on its own has no visualizations implemented. With `pandas`, a data manipulation module in Python, one can handle data well although it is not as intuitive as a dataframe or matrix in R. In addition, I needed to transform the data to make use of the Python module which was rather complicated. The user guidance is very well organized, though it depends on the packages used. There are plenty of features one can use, however, many are limited within their own packages. For example, one can use the features of some package on the plots produced by the package but combining features of different packages is rarely possible, i.e. the packages are usually flexible themselves but not in combination. Interactive plots can be built with `dashy` but require a lot of extra work which goes beyond the scope of the classical Python user. Thus it is rated like the R tools as "not supported". Note that in the ridgeline plot, the densities are better recognizable in the `ggtool`-plot compared to the Python plot which is definitely an advantage of `ggplot` but is not really represented in the rating. 
 
 #### Tool 4: Power BI
 | Tool          | Data Handling | User Guidance | Feature Richness | Innovation | Flexibility | Interaction |
