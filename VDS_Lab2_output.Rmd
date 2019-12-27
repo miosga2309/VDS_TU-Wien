@@ -224,20 +224,20 @@ All of variables I have shown in a certain context have proven to be statistical
 The first chart is about the year difference in the distribution of the count of new bikeshares per hour, thus a grouped density plot.
 
 #### Factor Weights on cnt
-The second plot is a simple bar chart in which each of the features (in total: 6) of the most regularized statistical model is represented by a bar. The part's size implies the importance or the weight of the variable in the model. The weight is calculated by the coefficient times the values, the independent variable can take (e.g., hour: 3.11 * 23 since hour is max. 23).
+The second plot is a simple bar chart in which each of the features (in total: 6) of the most regularized statistical model is represented by a bar. The part's size implies the importance or the weight of the variable in the model. The weight is calculated by the coefficient times the values, the independent variable can take (e.g., hour: 3.11 * 23 since hour is max. 23). Note that one can only get the coefficient weights when calculating the lasso regression which is possible in R and Python but not in the applications. For the sake of visualization, I added the coefficient weights manually to the data and visualized them with the apps.
 
 #### cnt-Density per Hour
 The feature hour is an essential explanatory variable in our model and in this plot, we can see why that is. The day time strongly influences the number of new bikeshares with peaks at around 8am and 5-6pm which one can clearly observe in the ridgeline plot.
 
 ## Charting Library and Application Selection
-I try to select libraries and applications which I might encounter in the future during my studies or on the job. For example, in an internship I will start soon, I have to work with Power BI.
+I try to select libraries and applications which I might encounter in the future during my studies or on the job. For example, in an internship I will start soon, I have to work with Tableau.
 Libraries:\
 1. **ggplot (R)**.\
 2. **R basic charting**.\
 3. **Python**.\
 Applications: \
-4. **Power BI**.\
-5. **Google Sheets**.\
+4. **Datawrapper**.\
+5. **Tableau**.\
 6. **Excel**.
 
 ## Recreations
@@ -273,9 +273,20 @@ barplot(as.vector(ggbar[,2]), names.arg=as.vector(ggbar[,1]))
 #### Tool 3: Python
 ![](/Users/jonasmiosga/Desktop/graphic TU/python_plots.png)
 
-#### Tool 4: Power BI
+#### Tool 4: Datawrapper
+![](/Users/jonasmiosga/Desktop/graphic TU/all datawrapper.png)
 
-#### Tool 5: Google Sheets
+#### Tool 5: Tableau
+<video width="320" height="240" controls>
+  <source src="/Users/jonasmiosga/Desktop/graphic TU/tableau histograms.mp4" type="video/mp4">
+</video>
+<video width="320" height="240" controls>
+  <source src="/Users/jonasmiosga/Desktop/graphic TU/tableau yr.mp4" type="video/mp4">
+</video>
+<video width="320" height="240" controls>
+  <source src="/Users/jonasmiosga/Desktop/graphic TU/tableau bars.mp4" type="video/mp4">
+</video>
+Distribution per Year; Distribution per Hour; Coefficient Weights
 
 #### Tool 6: Excel
 
@@ -300,15 +311,17 @@ The basic R plotting tools work similarly to `ggplot` but are limited to the bas
 | Python        |      6        |      8        |       9          |     8      |       5     |     1       |
 When talking about using Python, this will imply that I used modules because Python on its own has no visualizations implemented. With `pandas`, a data manipulation module in Python, one can handle data well although it is not as intuitive as a dataframe or matrix in R. In addition, I needed to transform the data to make use of the Python module which was rather complicated. The user guidance is very well organized, though it depends on the packages used. There are plenty of features one can use, however, many are limited within their own packages. For example, one can use the features of some package on the plots produced by the package but combining features of different packages is rarely possible, i.e. the packages are usually flexible themselves but not in combination. Interactive plots can be built with `dashy` but require a lot of extra work which goes beyond the scope of the classical Python user. Thus it is rated like the R tools as "not supported". Note that in the ridgeline plot, the densities are better recognizable in the `ggtool`-plot compared to the Python plot which is definitely an advantage of `ggplot` but is not really represented in the rating. 
 
-#### Tool 4: Power BI
+#### Tool 4: Datawrapper
 | Tool          | Data Handling | User Guidance | Feature Richness | Innovation | Flexibility | Interaction |
 |---------------|---------------|---------------|------------------|------------|-------------|-------------|
-| Power BI      |               |               |                  |            |             |             |
+| Datawrapper   |   2           |         6     |         4        |    2       |        5    |       1     |
+Besides a comprehensive importing tool which recognizes most of the common data formats and types automatically, one cannot manipulate the data besides determining string/numeric data types and selecting the first row as the header row. The user guidance is satisfactory. One is well guided by the company's guidance but there is not much support from a community such as Stack Overflow for Java, Python, R etc. The range of plots is limited to the demands of journals and newspapers since most of users seem to be newspapers such as New York Times, Süddeutsche and Zeit. The demands of those mostly cover extensive bar, pie and line plots, sometimes also maps. The application struggled a lot with frequencies and densities. It was not possible to do any kind of density plot, not even a histogram could be configured by manipulating the data into bins. There was only a histogram in the import phase when clicking on each variable and checking the data format (see the first plot of datawrapper above the distribution of `cnt`). Thus the feature richness is limited to basic plots one could expect in a newspaper but in this regard, the options are quite plentyful. Innovation is in consequence quite weak, flexibility within the existing plots satisfactory and there are no interaction possibilites. 
 
-#### Tool 5: Google Sheets
+#### Tool 5: Tableau
 | Tool          | Data Handling | User Guidance | Feature Richness | Innovation | Flexibility | Interaction |
 |---------------|---------------|---------------|------------------|------------|-------------|-------------|
-| Google Sheets |               |               |                  |            |             |             |
+| Tableau       |     3         |     6         |     7            |  5         |       7     |       8     |
+Tableau has similar import features like Datawrapper but can handle more file formats plus the data type settings are more advanced. Tableau has a large community and a proper guide by the developers. In addition, it does not appear to be limited to one particular type of plots. It offers a lot of features and options to build custom plots. This way, a range of more innovative plots can be created in a flexible manner. When it gets more complex, the user guidance is however not as strong as for more common plots. The density plots are rather distributional plots which visualize more or less the same properties but in absolut numbers, not in relative frequencies. I also had to adjust the representation of `cnt` by year and hour in a way that one can interactively click on the years and hours with detailed information popping up. There was no possibility of creating a ridgeline plot except by doing it customly which requires a lot more experience than I have at the moment. The interactivity is a great strength of Tableau. Every plot is automatically interactive and custom interactions can be added.
 
 #### Tool 6: Excel
 | Tool          | Data Handling | User Guidance | Feature Richness | Innovation | Flexibility | Interaction |
@@ -318,11 +331,11 @@ When talking about using Python, this will imply that I used modules because Pyt
 #### Summary Table
 | Tool          | Data Handling | User Guidance | Feature Richness | Innovation | Flexibility | Interaction |
 |---------------|---------------|---------------|------------------|------------|-------------|-------------|
-| ggplot        |      9        |       7       |   9              | 8          |           9 |        1    |
-| R             |               |               |                  |            |             |             |
-| Python        |               |               |                  |            |             |             |
-| Power BI      |               |               |                  |            |             |             |
-| Google Sheets |               |               |                  |            |             |             |
+| ggplot        |      9        |       7       |   9              | 8          |           9 |       1     |
+| R             |      9        |       8       |   5              | 3          |           7 |       1     |
+| Python        |      6        |       8       |   9              | 8          |           5 |       1     |
+| Datawrapper   |      2        |       6       |   4              | 2          |           5 |       1     |
+| Tableau       |      3        |       6       |   7              | 5          |           7 |       8     |
 | Excel         |               |               |                  |            |             |             |
 
 ## Task descript
