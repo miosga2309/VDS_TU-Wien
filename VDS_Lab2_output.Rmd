@@ -31,8 +31,8 @@ as.data.frame(bike)
 
 # Task 2: Data Analysis/Finding Insights
 ## The Data
-The dataset used in the laboratory 2 assignment is about bikesharing and is from [Kaggle](https://www.kaggle.com/c/184702-tu-ml-ws-19-bikesharing). Only the training dataset is used because we are only interested in the observations that have the dependent variable `cnt`. The data is from 2011 and 2012. The launch of the bikesharing company was in 2010. Several features about the weather conditions and the time in year are provided. Since we have variables indicating the year, season, month, weekday and hour, we can delete the timestamp variable. Also, the variable ID is deleted because in R, the program I am doing this report with, is indexing the rows anyway. \
-In addition to the circumstancial variables, the variable `cnt` indicates the count of new bike shares. It is grouped by start time of the share per hour, i.e. the count of new bike shares by hour. The long duration shares are not taken in the count. `cnt` is used as the dependent variable and the mean is 188.4 (red line in the plot). Summed up, this makes 13 variables. \
+The dataset used in the laboratory 2 assignment is from [Kaggle](https://www.kaggle.com/c/184702-tu-ml-ws-19-bikesharing) and about bikesharing in London, UK. Only the training dataset is used because we are only interested in the observations that have the dependent variable `cnt`. The data is from 2011 and 2012. The launch of the bikesharing company was in 2010. Several features about the weather conditions and the time in year are provided. Since we have variables indicating the year, season, month, weekday and hour, we can delete the timestamp variable. Also, the variable ID is deleted because in R, the program I am doing this report with, is indexing the rows anyway. \
+In addition to the weather and time variables, the variable `cnt` indicates the count of new bike shares. It is grouped by start time of the share per hour, i.e. the count of new bike shares by hour. The long duration shares are not taken in the count. `cnt` is used as the dependent variable and the mean is 188.4 (red line in the plot). Summed up, this makes 13 variables. \
 In total, we have 8690 observations, i.e. a count of new bike shares in this particular hour plus the corresponding weather information. The data is complete, we have no missing values.
 
 ```{r grpahs, echo=F, fig.width=14, fig.height=12}
@@ -157,7 +157,7 @@ df.lasso <- round(data.frame(as.matrix(coef.3features),
                              as.matrix(coef.min)), 
                   digits = 2)
 df.lasso[df.lasso == 0] <- "excluded"
-names(df.lasso) <- c("3 feature model",
+names(df.lasso) <- c("3-feature model",
                      "Most regularized", 
                      "Minimum error")
 df.lasso %>%
@@ -165,7 +165,7 @@ df.lasso %>%
   kable_styling(bootstrap_options = "striped", full_width = F)
 ```
 
-The table above provides us with the information about the lasso regression model, once with the option to choose the parameter to create the most regularized model, i.e. the model with the lowest number of coefficients while keeping the prediction error low. The second model reduces the prediction error to a minimum and also includes variables which have a low but existing effect on the dependent variable `cnt`. \
+The table above provides us with the information about the lasso regression model, once with the option to choose the parameter to create the most regularized model, i.e. the model with the lowest number of coefficients while keeping the prediction error low. The second model reduces the prediction error to a minimum and also includes variables which have a low but existing effect on the dependent variable `cnt`. Lastly, the 3-feature model contains the three most influential variables. In the following, we will use the most regularized model with six variables.\
 
 ## Insight No. 2
 #### Fact
@@ -224,13 +224,14 @@ All of variables I have shown in a certain context have proven to be statistical
 The first chart is about the year difference in the distribution of the count of new bikeshares per hour, thus a grouped density plot.
 
 #### Factor Weights on cnt
-The second plot is a simple bar chart in which each of the features (in total: 6) of the most regularized statistical model is represented by a bar. The part's size implies the importance or the weight of the variable in the model. The weight is calculated by the coefficient times the values, the independent variable can take (e.g., hour: 3.11 * 23 since hour is max. 23). Note that one can only get the coefficient weights when calculating the lasso regression which is possible in R and Python but not in the applications. For the sake of visualization, I added the coefficient weights manually to the data and visualized them with the apps.
+The second plot is a simple bar chart in which each of the features (in total: 6) of the most regularized statistical model is represented by a bar. The part's size implies the importance or the weight of the variable in the model. The weight is calculated by the coefficient times the values, the independent variable can take (e.g., hour: 3.11 * 23 since hour is max. 23). \
+Note that one can only get the coefficient weights when calculating the lasso regression which is possible in R and Python but not in the applications. For the sake of visualization, I added the coefficient weights manually to the data and visualized them with the apps.
 
 #### cnt-Density per Hour
 The feature hour is an essential explanatory variable in our model and in this plot, we can see why that is. The day time strongly influences the number of new bikeshares with peaks at around 8am and 5-6pm which one can clearly observe in the ridgeline plot.
 
 ## Charting Library and Application Selection
-I try to select libraries and applications which I might encounter in the future during my studies or on the job. For example, in an internship I will start soon, I have to work with Tableau.
+I try to select libraries and applications which I might encounter in the future during my studies or on the job. For example, in an internship I will start soon, I have to work with Tableau. \
 Libraries:\
 1. **ggplot (R)**.\
 2. **R basic charting**.\
@@ -269,12 +270,15 @@ plot(d3, main="Density of cnt at hour 17", xlab="cnt[hr==17]")
 barplot(as.vector(ggbar[,2]), names.arg=as.vector(ggbar[,1]))
 
 ```
+A ridgeline plot could be created, however, one could create 24 individual density plots. One where the day hour is 17 was created for illustration.
 
 #### Tool 3: Python
 ![](/Users/jonasmiosga/Desktop/graphic TU/python_plots.png)
+All plots could be reproduced, however, the ridgeline plot has thick horizontal base lines which make it difficult to observe the densities.
 
 #### Tool 4: Datawrapper
 ![](/Users/jonasmiosga/Desktop/graphic TU/all datawrapper.png)
+Datawrapper could not handle densities which is why two of three plots could not be recreated.
 
 #### Tool 5: Tableau
 <video width="320" height="240" controls>
@@ -286,9 +290,12 @@ barplot(as.vector(ggbar[,2]), names.arg=as.vector(ggbar[,1]))
 <video width="320" height="240" controls>
   <source src="/Users/jonasmiosga/Desktop/graphic TU/tableau bars.mp4" type="video/mp4">
 </video>
-Distribution per Year; Distribution per Hour; Coefficient Weights
+Distribution per Year; Distribution per Hour; Coefficient Weights \
+Tableau was able to recreate the plots, the density plots in a somewhat adjusted way. The densities are not relative but absolute frequency distributions. The ridgeline plot is not really a ridgeline plot but the 24 distributions in one plot. Because of the interactiveness, one can click on each of the day hours to observe the `cnt` distribution. 
 
 #### Tool 6: Excel
+![](/Users/jonasmiosga/Desktop/graphic TU/excel_vds_all.png)
+Excel could also not handle densities but represented the distributions by absolute frequency distributions. Excel has a somewhat different way of visualizing the frequencies because I had to create bins to have a smooth line in the plot. When counting the frequencies of `cnt` with bin size 1, each outlier would result in a spike in the diagram and within the data are hundreds of those outliers which would make the chart unreadable. For the ridgeline plot, spark lines were used to have a similar chart to the ridgeline plot. In principal, it worked but unfortunately, there is no x-axis with the values from 0 to 1000.
 
 ## Evaluation
 The grade scale goes from 1 (bad/not supported) to 10 (great/highly supported). Every grading process is shortly described.
@@ -303,7 +310,7 @@ The grade scale goes from 1 (bad/not supported) to 10 (great/highly supported). 
 | Tool          | Data Handling | User Guidance | Feature Richness | Innovation | Flexibility | Interaction |
 |---------------|---------------|---------------|------------------|------------|-------------|-------------|
 | R             |      9        |         8     |       5          |  3         |       7     |       1     |
-The basic R plotting tools work similarly to `ggplot` but are limited to the basics in plotting. Also, the design is very basic. More advanced graphs like the ridgeline plots are not possible. However, we could plot each plot per hour individually which I did once as an example. The user guidance is very good which is also caused in the simplicity of features the basic R has. Like `ggplot` the basic R visualization methods are also relatively flexible but again, no interaction is possible. Note that not all variable names are displayed which is unfortunate.
+The basic R plotting tools work similarly to `ggplot` but are limited to the basics in plotting. Also, the design is very basic. More advanced graphs like the ridgeline plots are not possible. However, we could plot each plot per hour individually which I did once as an example. The user guidance is very good which is also caused in the simplicity of features the basic R has. Like `ggplot` the basic R visualization methods are also relatively flexible but again, no interaction is possible.
 
 #### Tool 3: Python
 | Tool          | Data Handling | User Guidance | Feature Richness | Innovation | Flexibility | Interaction |
@@ -326,7 +333,8 @@ Tableau has similar import features like Datawrapper but can handle more file fo
 #### Tool 6: Excel
 | Tool          | Data Handling | User Guidance | Feature Richness | Innovation | Flexibility | Interaction |
 |---------------|---------------|---------------|------------------|------------|-------------|-------------|
-| Excel         |               |               |                  |            |             |             |
+| Excel         |       7       |       9       |   7              | 4          |           6 |       1     |
+Excel has its pros and cons when it comes to data handling. On the one hand, excel is quite stubborn when it comes to data types. One has to make sure that the data is classified correctly, i.e. one has to determine whether it is numeric and within the numerics, it is even necessary to give information about whether it is a count, sum, average etc. On the other hand, working with the Pivot tables is quite convenient because one can easily set columns and rows and filter on those variables. Although it is quite a hussle to have the data correctly organized for its purposes, the possibilities are enormous. As Excel is a popular software, there is a lot of guidance online. This way, the actually quite limited standard feature selection given by Excel can be extended to a lot of new charts. However, there is a limit to innovative plots. Some, for example the ridgeline plot, can be realized by top-class excel users but are very complicated for normal users. The richness of settings paired with the online user guidance forums leads to a high flexibility, having in mind that it takes a certain level of skill. Lastly, interactions are not possible. One can however dynamically change the static plots by checking and unchecking boxes to rearrange the data selection for the plots. 
 
 #### Summary Table
 | Tool          | Data Handling | User Guidance | Feature Richness | Innovation | Flexibility | Interaction |
@@ -336,21 +344,6 @@ Tableau has similar import features like Datawrapper but can handle more file fo
 | Python        |      6        |       8       |   9              | 8          |           5 |       1     |
 | Datawrapper   |      2        |       6       |   4              | 2          |           5 |       1     |
 | Tableau       |      3        |       6       |   7              | 5          |           7 |       8     |
-| Excel         |               |               |                  |            |             |             |
+| Excel         |      7        |       9       |   7              | 4          |           6 |       1     |
 
-## Task descript
-1. Select 3 charting libraries and 3 applications you would like to test (see below).
-2. Recreate all three charts you created in task 2 in the 6 selected charting libraries and applications, and also explore the interaction possibilities.
-3. Evaluate the selected charting libraries and applications based on the given evaluation scheme (see below).
-4. Draw conclusions from the study and rank the tested charting libraries and applications.
-5. Create an overview visualization to report the results of the study (see below).
-
-Evaluate the charting libraries and applications according to criteria given below.
-Always use a grade from 1 (bad / not supported) to 10 (great / highly supported).
-- Data Handling (How easy is it to load data and to do simple data handling tasks like filtering?)
-- User Guidance (How easy is it to find the necessary functions and get help on certain features? Is there a documentation?)
-- Feature Richness (How many visualization features are provided?)
-- Innovation (Are innovative visualization features provided, or only basic charts?)
-- Flexibility (Is it possible to adjust the visualizations to your needs?)
-- Interaction (Is it possible to create interactive visualizations?)
-
+## Summary
